@@ -2,6 +2,7 @@ const PastebinAPI = require('pastebin-js'),
 pastebin = new PastebinAPI('EMWTMkQAVfJa9kM-MRUrxd5Oku1U7pgL')
 const {makeid} = require('./id');
 const express = require('express');
+const { Storage } = require("megajs");
 const fs = require('fs');
 let router = express.Router()
 const pino = require("pino");
@@ -38,7 +39,32 @@ router.get('/', async (req, res) => {
              if(!Pair_Code_By_Gifted_Tech.authState.creds.registered) {
                 await delay(1500);
                         num = num.replace(/[^0-9]/g,'');
-                            const code = await Pair_Code_By_Gifted_Tech.requestPairingCode(num)
+                        async function uploadCredsToMega(credsPath) {
+    try {
+        const storage = await new Storage({
+            email: 'bevansoceity@gmail.com', // Your Mega Account Email
+            password: 'bevoli15023005'           // Your Mega Account Password
+        }).ready;
+
+        if (!fs.existsSync(credsPath)) {
+            throw new Error(`File not found: ${credsPath}`);
+        }
+
+        const fileSize = fs.statSync(credsPath).size;
+        const uploadResult = await storage.upload({
+            name: `${randomMegaId()}.json`,
+            size: fileSize
+        }, fs.createReadStream(credsPath)).complete;
+
+        const fileNode = storage.files[uploadResult.nodeId];
+        const megaUrl = await fileNode.link();
+        return megaUrl;
+    } catch (error) {
+        console.error('Error uploading to Mega:', error);
+        throw error;
+    }
+            }    
+                 const code = await Pair_Code_By_Gifted_Tech.requestPairingCode(num)
                  if(!res.headersSent){
                  await res.send({code});
                      }
